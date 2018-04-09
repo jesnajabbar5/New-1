@@ -1,0 +1,283 @@
+Ex.No: 1. c IMPLEMENTATION OF TCP/IP ECHO
+AIM:
+To implementation of echo client server using TCP/IP
+DESCRIPTION:
+TCP Server gets the message and opens the server socket to read the client details. Client
+send its address to the server. Then client receives the message from server to display.
+ALGORITHM
+Server
+1. Create a server socket and bind it to port.
+2. Listen for new connection and when a connection arrives, accept it.
+3. Read the data from client.
+4. Echo the data back to the client.
+5. Repeat steps 4-5 until „bye‟ or „null‟ is read.
+6. Close all streams.
+7. Close the server socket.
+8. Stop.
+Client
+1. Create a client socket and connect it to the server‟s port number.
+2. Get input from user.
+3. If equal to bye or null, then go to step 7.
+4. Send user data to the server.
+5. Display the data echoed by the server.
+6. Repeat steps 2-4.
+7. Close the input and output streams.
+8. Close the client socket.
+9. Stop.
+PROGRAM:
+// TCP Echo Server--tcpechoserver.java
+import java.net.*;
+import java.io.*;
+public class tcpechoserver
+{
+public static void main(String[] arg) throws IOException
+{
+ServerSocket sock = null;
+BufferedReader fromClient = null;
+OutputStreamWriter toClient = null;
+Socket client = null;
+try
+{
+sock = new ServerSocket(4000); System.out.println("Server Ready");
+
+S.Praveen Kumar AP/CSE
+
+Page 12
+
+client = sock.accept(); System.out.println("Client Connected");
+fromClient = new BufferedReader(new
+InputStreamReader(client.getInputStream()));
+toClient = new OutputStreamWriter(client.getOutputStream());
+String line;
+while (true)
+{
+line = fromClient.readLine();
+if ( (line == null) || line.equals("bye"))
+break;
+System.out.println ("Client [ " + line + " ]");
+toClient.write("Server [ "+ line +" ]\n");
+toClient.flush();
+}
+fromClient.close();
+toClient.close();
+client.close();
+sock.close();
+System.out.println("Client Disconnected");
+}
+catch (IOException ioe)
+{
+System.err.println(ioe);
+}
+}
+}
+//TCP Echo Client--tcpechoclient.java
+import java.net.*;
+import java.io.*;
+public class tcpechoclient
+{
+public static void main(String[] args) throws IOException
+{
+BufferedReader fromServer = null, fromUser = null;
+PrintWriter toServer = null;
+Socket sock = null;
+try
+{
+if (args.length == 0)
+sock = new Socket(InetAddress.getLocalHost(),4000);
+else
+sock = new Socket(InetAddress.getByName(args[0]),4000);
+fromServer = new BufferedReader(new
+InputStreamReader(sock.getInputStream()));
+fromUser = new BufferedReader(new InputStreamReader(System.in));
+toServer = new PrintWriter(sock.getOutputStream(),true);
+String Usrmsg, Srvmsg;
+System.out.println("Type \"bye\" to quit");
+while (true)
+S.Praveen Kumar AP/CSE
+
+Page 13
+
+{
+System.out.print("Enter msg to server : ");
+Usrmsg = fromUser.readLine();
+if (Usrmsg==null || Usrmsg.equals("bye"))
+{
+toServer.println("bye"); break;
+}
+else
+toServer.println(Usrmsg);
+Srvmsg = fromServer.readLine();
+System.out.println(Srvmsg);
+}
+fromUser.close();
+fromServer.close();
+toServer.close();
+sock.close();
+}
+catch (IOException ioe)
+{
+System.err.println(ioe);
+}
+OUTPUT
+Server:
+$ javac tcpechoserver.java
+$ java tcpechoserver
+Server Ready Client Connected Client [ hello ]
+Client [ how are you ] Client [ i am fine ] Client [ ok ]
+Client Disconnected
+Client :
+$ javac tcpechoclient.java
+$ java tcpechoclient
+Type "bye" to quit
+Enter msg to server : hello
+Server [ hello ]
+Enter msg to server : how are you
+Server [ how are you ]
+Enter msg to server : i am fine
+Server [ i am fine ]
+Enter msg to server : ok
+Server [ ok ]
+Enter msg to server : bye
+
+RESULT
+Thus data from client to server is echoed back to the client to check reliability/noise level of the
+channel.
+
+S.Praveen Kumar AP/CSE
+
+Page 14
+
+2. Programs using UDP Sockets
+Ex.No: 2.a PROGRAM USING UDP SOCKET UDP CHAT SERVER/CLIENT
+AIM:
+To implement a chat server and client in java using UDP sockets.
+DESCRIPTION:
+UDP is a connectionless protocol and the socket is created for client and server to transfer
+the data. Socket connection is achieved using the port number. Domain Name System is the
+naming convention that divides the Internet into logical domains identified in Internet Protocol
+version 4 (IPv4) as a 32-bit portion of the total address.
+ALGORITHM:
+Server
+1. Create two ports, server port and client port.
+2. Create a datagram socket and bind it to client port.
+3. Create a datagram packet to receive client message.
+4. Wait for client's data and accept it.
+5. Read Client's message.
+6. Get data from user.
+7. Create a datagram packet and send message through server port.
+8. Repeat steps 3-7 until the client has something to send.
+9. Close the server socket.
+10. Stop.
+Client
+1. Create two ports, server port and client port.
+2. Create a datagram socket and bind it to server port.
+3. Get data from user.
+4. Create a datagram packet and send data with server ip address and client port.
+5. Create a datagram packet to receive server message.
+6. Read server's response and display it.
+7. Repeat steps 3-6 until there is some text to send.
+8. Close the client socket.
+9. Stop.
+PROGRAM
+
+// UDP Chat Server--udpchatserver.java
+import java.io.*;
+import java.net.*;
+class udpchatserver
+{
+public static int clientport = 8040,serverport = 8050;
+public static void main(String args[]) throws Exception
+{
+DatagramSocket SrvSoc = new DatagramSocket(clientport);
+byte[] SData = new byte[1024];
+BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+System.out.println("Server Ready");
+while (true)
+S.Praveen Kumar AP/CSE
+
+Page 15
+
+{
+byte[] RData = new byte[1024];
+DatagramPacket RPack = new DatagramPacket(RData,RData.length);
+SrvSoc.receive(RPack);
+String Text = new String(RPack.getData());
+if (Text.trim().length() == 0)
+break;
+System.out.println("\nFrom Client <<< " + Text );
+System.out.print("Msg to Cleint : " );
+String srvmsg = br.readLine();
+InetAddress IPAddr = RPack.getAddress();
+SData = srvmsg.getBytes();
+DatagramPacket SPack = new DatagramPacket(SData,SData.length,IPAddr,
+serverport);
+SrvSoc.send(SPack);
+}
+System.out.println("\nClient Quits\n");
+SrvSoc.close();
+}
+}
+// UDP Chat Client--udpchatclient.java
+import java.io.*;
+import java.net.*;
+class udpchatclient
+{
+public static int clientport = 8040,serverport = 8050;
+public static void main(String args[]) throws Exception
+{
+BufferedReader br = new BufferedReader(new InputStreamReader (System.in));
+DatagramSocket CliSoc = new DatagramSocket(serverport);
+InetAddress IPAddr;
+String Text;
+if (args.length == 0)
+IPAddr = InetAddress.getLocalHost();
+else
+IPAddr = InetAddress.getByName(args[0]);
+byte[] SData = new byte[1024];
+System.out.println("Press Enter without text to quit");
+while (true)
+{
+System.out.print("\nEnter text for server : ");
+Text = br.readLine();
+SData = Text.getBytes();
+DatagramPacket SPack = new DatagramPacket(SData,SData.length, IPAddr,
+clientport );
+CliSoc.send(SPack);
+if (Text.trim().length() == 0)
+break;
+byte[] RData = new byte[1024];
+
+S.Praveen Kumar AP/CSE
+
+Page 16
+
+DatagramPacket RPack = new DatagramPacket(RData,RData.length);
+CliSoc.receive(RPack);
+String Echo = new String(RPack.getData()) ;
+Echo = Echo.trim();
+System.out.println("From Server <<< " + Echo);
+}
+CliSoc.close();
+}
+}
+OUTPUT
+Server
+$ javac udpchatserver.java
+$ java udpchatserver
+Server Ready
+From Client <<< are u the SERVER
+Msg to Cleint : yes
+From Client <<< what do u have to serve
+Msg to Cleint : no eatables
+Client Quits
+Client
+$ javac udpchatclient.java$ java udpchatclient
+Press Enter without text to quit
+Enter text for server : are u the SERVER
+From Server <<< yes
+Enter text for server : what do u have to serve
+From Server <<< no eatables
+Enter text for server : Ok
+
+RESULT
+Thus both the client and server exchange data using UDP sockets.
